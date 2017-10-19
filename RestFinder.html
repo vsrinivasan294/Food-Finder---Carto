@@ -1,0 +1,171 @@
+<!--
+    Food Finder coded by Mayank Singamreddy, Rishikesh Balaji and Vishnu Srinivasan
+    Carto API used for the simulation of most resources 
+ -->
+
+
+<!DOCTYPE html>
+<html>
+<head>
+<title>Food Finder</title>
+<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+<meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
+<style>
+html, body, #map {
+height: 100%;
+margin: 0;
+}
+#map {
+padding-left: 20%;
+}
+#control {
+width: 20%;
+float: left;
+padding-left: 5px;
+padding-right: 5px;
+padding-top: 20px;
+}
+.filter {
+margin-bottom: 18px;
+}
+.itemrow {
+padding-bottom: 5px;
+}
+</style>
+<link rel="stylesheet" href="http://libs.cartocdn.com/cartodb.js/v3/3.15/themes/css/cartodb.css" />
+<link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+</head>
+<body>
+<div id="control">
+<div>
+Category
+<input class="form-control filter" id="category" type="text" list="dropDownList">
+</input>
+</div>
+<datalist id="dropDownList"></datalist>
+<div>
+Maximum Price
+<input class="filter form-control" id="maxprice" type="number" step="any" value="4">
+</input>
+</div>
+<div>
+Minimum Price
+<input class="filter form-control" id="minprice" type="number" step="any" value="1">
+</input>
+</div>
+<div>
+Maximum Rating
+<input class="filter form-control" id="maxrating" type="number" step="any" value="5">
+</input>
+</div>
+<div>
+Minimum Rating
+<input class="filter form-control" id="minrating" type="number" step="any" value="0">
+</input>
+</div>
+<div id="restaurantList"></div>
+</div>
+<div id="map"></div>
+
+<!-- include cartodb.js library -->
+
+
+<script src="http://libs.cartocdn.com/cartodb.js/v3/3.15/cartodb.js"></script>
+<script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+<script>
+function main() {
+var dropDownList = document.getElementById("dropDownList");
+var listOfCategories = ['Afghan', 'African', 'American (New)', 'American (Traditional)', 'Animal Shelters', 'Appliances & Repair', 'Argentine', 'Art Galleries', 'Asian Fusion', 'Austrian', 'Bagels', 'Bakeries', 'Banks & Credit Unions', 'Barbeque', 'Bars', 'Beer Bar', 'Beer Gardens', 'Beer, Wine & Spirits', 'Belgian', 'Coffee & Tea', 'Bookstores', 'Bowling', 'Brazilian', 'Breakfast & Brunch', 'Breweries', 'British', 'Bubble Tea', 'Buffets', 'Burgers', 'Burmese', 'Butcher', 'Cafes', 'Cajun/Creole', 'Cambodian', 'Candy Stores', 'Cantonese', 'Caribbean', 'Caterers', 'Champagne Bars', 'Cheese Shops', 'Cheesesteaks', 'Chicken Shop', 'Chicken Wings', 'Chinese', 'Chiropractors', 'Chocolatiers & Shops', 'Cinema', 'Cocktail Bars', 'Comfort Food', 'Convenience Stores', 'Creperies', 'Cuban', 'Cupcakes', 'Czech', 'Delis', 'Desserts', 'Dim Sum', 'Diners', 'Dive Bars', 'DJs', 'Donuts', 'Ethiopian', 'Falafel', 'Farmers Market', 'Fast Food', 'Filipino', 'Fondue', 'Food', 'Food Delivery Services', 'Food Stands', 'Food Trucks', 'French', 'Fruits & Veggies', 'Furniture Stores', 'Gastropubs', 'Gay Bars', 'German', 'Gluten-Free', 'Greek', 'Grocery', 'Halal', 'Hawaiian', 'Health Markets', 'Himalayan/Nepalese', 'Hookah Bars', 'Hot Dogs', 'Hot Pot', 'Ice Cream & Frozen Yogurt', 'Indian', 'Indonesian', 'Irish', 'Italian', 'Izakaya', 'Japanese', 'Jazz & Blues', 'Juice Bars & Smoothies', 'Korean', 'Laotian', 'Latin American', 'Lebanese', 'Live/Raw Food', 'Local Flavor', 'Lounges', 'Malaysian', 'Meat Shops', 'Mediterranean', 'Mexican', 'Middle Eastern', 'Mini Golf', 'Modern European', 'Moroccan', 'Music Venues', 'Noodles', 'Pakistani', 'Persian/Iranian', 'Peruvian', 'Pizza', 'Popcorn Shops', 'Pubs', 'Ramen', 'Restaurants', 'Russian', 'Salad', 'Salvadoran', 'Sandwiches', 'Scandinavian', 'Seafood', 'Seafood Markets', 'Senegalese', 'Shanghainese', 'Singaporean', 'Soul Food', 'Soup', 'Southern', 'Spanish', 'Sports Bars', 'Steakhouses', 'Street Vendors', 'Supper Clubs', 'Sushi Bars', 'Szechuan', 'Tacos', 'Taiwanese', 'Tapas Bars', 'Tapas/Small Plates', 'Tea Rooms', 'Thai', 'Tiki Bars', 'Turkish', 'Vegan', 'Vegetarian', 'Venezuelan', 'Vietnamese', 'Wine Bars', 'None', 'Venues & Event Spaces', 'Brasseries', 'Polish', 'Pet Adoption', 'Appliances', 'Dance Clubs', 'Auto Glass Services', 'Kosher', 'Portuguese', 'Patisserie/Cake Shop', 'Karaoke', 'Pool Halls', 'Tobacco Shops', 'Toy Stores', 'Fish & Chips', 'Mongolian', 'Specialty Food', 'Imported Food', 'Massage Therapy', 'Coffee Roasteries', 'Wholesale Stores', 'Shopping', 'Sporting Goods', 'Shaved Ice', 'Gift Shops', 'Adult Entertainment', 'Herbs & Spices', 'Gelato', 'Piano Bars', 'Puerto Rican', 'Egyptian', 'Basque', 'Cideries', 'Performing Arts', 'Cooking Schools', 'Food Court', 'Poke', 'Nutritionists', 'Head Shops', 'Irish Pub', 'Organic Stores', 'Speakeasies', 'Tex-Mex', 'Arabian', 'Do-It-Yourself Food', 'Sardinian', 'Pop-Up Restaurants', 'Hungarian', 'Cooking Classes', 'Wineries', 'Wraps', 'Whiskey Bars', 'Themed Cafes', 'Macarons', 'Internet Cafes', 'Community Service/Non-Profit', 'Poutineries', 'Waffles', 'Casinos', 'Pasta Shops', 'Gas & Service Stations', 'Acai Bowls', 'Syrian', 'Armenian', 'Scottish', 'Uzbek', 'Social Clubs'];
+var cell = "<option value=\" %s \">";
+var options = '';
+for (var i = 0; i < listOfCategories.length; i++) {
+var category = listOfCategories[i];
+options += cell.replace(" %s ", category);
+}
+
+dropDownList.innerHTML = options;
+var params = {
+'maxprice': 4,
+'minprice': 0,
+'maxrating': 5,
+'minrating': 0,
+'category': ""
+};
+
+// initialize the coordinates of the map on the screen
+var layer = null;
+vis = cartodb.createVis('map', 'https://will748.carto.com/api/v2/viz/2c250f7e-a854-11e6-a9b1-0e233c30368f/viz.json', {
+search: false,
+carto_logo: false,
+center_lat: 37.873420,
+center_lon: -122.278484,
+
+zoom: 10
+})
+.done(function(vis, layers) {
+layer = layers[1]
+console.log(layers[1])
+})
+
+.error(function(err) {
+console.log(err);
+});
+
+
+function refresh(p){
+var sql = "SELECT * FROM fr WHERE (" +
+"category1 ILIKE '%" + p['category'] + "%'" +
+" OR category2 ILIKE '%" + p['category'] + "%'" +
+" OR category3 ILIKE '%" + p['category'] + "%') AND price >= " + p['minprice'] +
+" AND price <= " + p['maxprice'] +
+" AND rating >= " + p['minrating'] +
+" AND rating <= " + p['maxrating'];
+console.log(sql)
+console.log(layer)
+layer.layers[0].options.sql = sql
+layer.invalidate()
+updateList(sql)
+}
+
+function updateList(sql){
+var url = "https://will748.carto.com/api/v2/sql?q=" + sql.replace(/\%/g, "%25") + " LIMIT 20";
+$.getJSON(url, function(data){
+var divs = data.rows.map(function(row){
+return "<a href=\"" + row.url + "\"><div class=\"itemrow\">" + row.name + "</div></a>";
+});
+document.getElementById("restaurantList").innerHTML = divs.join('')
+})
+}
+
+// functions take in the parameters of the data passed in by user
+
+$("#category").on("change paste keyup", function(){
+params['category'] = $(this).val();
+refresh(params);
+});
+$("#maxprice").on("change paste keyup", function(){
+params['maxprice'] = $(this).val()
+refresh(params);
+});
+$("#minprice").on("change paste keyup", function(){
+params['minprice'] = $(this).val();
+refresh(params);
+});
+
+
+$("#maxrating").on("change paste keyup", function(){
+params['maxrating'] = $(this).val();
+refresh(params);
+});
+
+$("#minrating").on("change paste keyup", function(){
+params['minrating'] = $(this).val();
+refresh(params);
+});
+}
+
+window.onload = main;
+</script>
+</body>
+</html>
+
